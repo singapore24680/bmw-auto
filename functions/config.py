@@ -16,28 +16,29 @@
 # if you are using this following code then don't forgot to give proper
 # credit to t.me/kAiF_00z (github.com/kaif-00z)
 
+from decouple import config
+
+
 class Var:
     # Telegram Credentials
-    API_ID = 23576751
-    API_HASH = "5224da0df5c60ec53de09ce79b9aa2c3"
-    BOT_TOKEN = "7073096374:AAExF6bh0C9Polj2mQpz7ZqDXlUodeWG_EE"
+
+    API_ID = config("API_ID", default=6, cast=int)
+    API_HASH = config("API_HASH", default="eb06d4abfb49dc3eeb1aeb98ae0f581e")
+    BOT_TOKEN = config("BOT_TOKEN", default=None)
 
     # Database Credentials
-    REDIS_URI = "redis-13370.c91.us-east-1-3.ec2.cloud.redislabs.com:13370"
-    REDIS_PASS = "pw4XVhnBk3msDmA59Ofy3858DWMB8Uhf"
+
+    REDIS_URI = config("REDIS_URI", default=None)
+    REDIS_PASS = config("REDIS_PASSWORD", default=None)
 
     # Channels Ids
-    BACKUP_CHANNEL = -1002062401412
-    MAIN_CHANNEL = -1002003808456
-    LOG_CHANNEL = -1002080108180
-    CLOUD_CHANNEL = -1002130039069
-    FORCESUB_CHANNEL = 0  # Set to 0 if not used
-    OWNER = 6642501643
 
-# Example of accessing the variables
-print(Var.BOT_TOKEN)
-print(Var.MAIN_CHANNEL)
-
+    BACKUP_CHANNEL = config("BACKUP_CHANNEL", default=0, cast=int)
+    MAIN_CHANNEL = config("MAIN_CHANNEL", cast=int)
+    LOG_CHANNEL = config("LOG_CHANNEL", cast=int)
+    CLOUD_CHANNEL = config("CLOUD_CHANNEL", cast=int)
+    FORCESUB_CHANNEL = config("FORCESUB_CHANNEL", default=0, cast=int)
+    OWNER = config("OWNER", default=0, cast=int)
 
     # Other Configs
 
