@@ -17,24 +17,19 @@ except ModuleNotFoundError:
     from telethon.tl.functions.channels import CreateChannelRequest
     from telethon.tl.functions.contacts import UnblockRequest
 
-# Configuration variables
-BOT_TOKEN = "7073096374:AAExF6bh0C9Polj2mQpz7ZqDXlUodeWG_EE"
-MAIN_CHANNEL = "-1002003808456"
-LOG_CHANNEL = "-1002080108180"
-CLOUD_CHANNEL = "-1002130039069"
-BACKUP_CHANNEL = "-1002062401412"
-REDIS_URI = "redis-13370.c91.us-east-1-3.ec2.cloud.redislabs.com:13370"
-REDIS_PASSWORD = "pw4XVhnBk3msDmA59Ofy3858DWMB8Uhf"
-OWNER = "6642501643"
+DATA = {}
+ENV = """
+BOT_TOKEN={}
+MAIN_CHANNEL={}
+LOG_CHANNEL={}
+CLOUD_CHANNEL={}
+BACKUP_CHANNEL={}
+REDIS_URI={}
+REDIS_PASSWORD={}
+OWNER={}
+"""
 
-DATA = {
-    "bot_token": BOT_TOKEN,
-    "redis_uri": REDIS_URI,
-    "redis_pass": REDIS_PASSWORD,
-    "owner_id": OWNER
-}
 
-# Function to generate session string
 async def generate_session_string():
     api_id = int(input("Enter your API_ID: "))
     api_hash = input("Enter your API_HASH: ")
@@ -44,10 +39,10 @@ async def generate_session_string():
     print("API_ID and HASH Not Found!")
     sys.exit(1)
 
-# Function to get Redis credentials
+
 def get_redis():
-    redis_uri = REDIS_URI
-    redis_pass = REDIS_PASSWORD
+    redis_uri = input("Enter your Redis URI: ")
+    redis_pass = input("Enter your Redis Password: ")
     if redis_uri and redis_pass:
         DATA["redis_uri"] = redis_uri
         DATA["redis_pass"] = redis_pass
@@ -57,7 +52,7 @@ def get_redis():
         DATA["redis_pass"] = ""
         return False
 
-# Function to create a Telegram channel
+
 async def create_channel(client, title):
     try:
         r = await client(
@@ -70,57 +65,75 @@ async def create_channel(client, title):
 
         created_chat_id = r.chats[0].id
         return f"-100{created_chat_id}"
-    except Exception as e:
+    except BaseException:
         print("Unable to Create Channel...")
-        print(format_exc())
         sys.exit(1)
 
-# Main function to automate bot and channel creation
+
+def generate_env():
+    txt = ENV.format(
+        DATA["bot_token"],
+        DATA["Ongoing Anime 2024"],
+        DATA["Ongoing Anime Logs"],
+        DATA["Ongoing Anime Samples And SS"],
+        DATA["Ongoing Anime Backup"],
+        DATA.get("redis_uri") or "",
+        DATA.get("redis_pass") or "",
+        DATA["owner_id"],
+    )
+    with open(".env", "w") as f:
+        f.write(txt.strip())
+    print("Succesfully Generated .env File Don't Forget To Save It! For Future Uses.")
+
+
 async def auto_maker():
     string_session, api_id, api_hash = await generate_session_string()
-    print("Session String:", string_session)
-    
-    async with TelegramClient(StringSession(string_session), api_id, api_hash) as client:
+    print(string_session)
+    async with TelegramClient(
+        StringSession(string_session), api_id, api_hash
+    ) as client:
         print("Creating Bot Account...")
         who = await client.get_me()
         DATA["owner_id"] = who.id
-        name = f"{who.first_name}'s Auto Anime Bot"
-        username = who.username + "_anime_bot" if who.username else f"ongoing_anime_{str(who.id)[5:]}_bot"
-        
+        name = who.first_name + "'s Auto Anime Bot"
+        if who.username:
+            username = who.username + "_anime_bot"
+        else:
+            username = "ongoing_anime_" + (str(who.id))[5:] + "_bot"
         bf = "@BotFather"
         await client(UnblockRequest(bf))
         await client.send_message(bf, "/cancel")
         await asyncio.sleep(1)
         await client.send_message(bf, "/newbot")
         await asyncio.sleep(1)
-        
-        response = (await client.get_messages(bf, limit=1))[0].text
-        if response.startswith("That I cannot do.") or "20 bots" in response:
-            print("You Already Made 20 Bots In Your Current Account. You Have To Delete One Bot To Run This Script.")
+        isdone = (await client.get_messages(bf, limit=1))[0].text
+        if isdone.startswith("That I cannot do.") or "20 bots" in isdone:
+            print(
+                "You Already Made 20 Bots In Your Current Account. You Have To Deleted One Bot To Run This Script."
+            )
             sys.exit(1)
-        
         await client.send_message(bf, name)
         await asyncio.sleep(1)
-        response = (await client.get_messages(bf, limit=1))[0].text
-        if not response.startswith("Good."):
-            print("Please make a Bot from @BotFather and add its token in BOT_TOKEN as an env var and restart me.")
+        isdone = (await client.get_messages(bf, limit=1))[0].text
+        if not isdone.startswith("Good."):
+            print(
+                "Please make a Bot from @BotFather and add it's token in BOT_TOKEN, as an env var and restart me."
+            )
             sys.exit(1)
-        
         await client.send_message(bf, username)
         await asyncio.sleep(1)
-        response = (await client.get_messages(bf, limit=1))[0].text
+        isdone = (await client.get_messages(bf, limit=1))[0].text
         await client.send_read_acknowledge("botfather")
-        if response.startswith("Sorry,"):
-            username = f"ongoing_anime_{str(who.id)[6:]}_{random.randint(1, 100)}_bot"
+        if isdone.startswith("Sorry,"):
+            ran = random.randint(1, 100)
+            username = "ongoing_anime_" + (str(who.id))[6:] + str(ran) + "_bot"
             await client.send_message(bf, username)
             await asyncio.sleep(1)
-            response = (await client.get_messages(bf, limit=1))[0].text
-        
-        if response.startswith("Done!"):
-            bot_token = response.split("`")[1]
+            isdone = (await client.get_messages(bf, limit=1))[0].text
+        if isdone.startswith("Done!"):
+            bot_token = isdone.split("`")[1]
             DATA["bot_token"] = bot_token
-            print("Successfully Created Bot Account.")
-        
+            print("Succesfully Created Bot Account...")
         print("Creating Channels...")
         for ch_name in [
             "Ongoing Anime Logs",
@@ -142,12 +155,17 @@ async def auto_maker():
                     add_admins=True,
                 )
                 DATA[ch_name] = chat_id
-            except Exception:
-                print("Error While Creating Channel And Promoting Bot.")
+            except BaseException:
+                print("Error While Creating Channel And Promoting Bot..")
                 print(format_exc())
                 sys.exit(1)
-        
-        print("Successfully Created Channels.")
+        print("Succesfully Created Channel...")
+        db = get_redis()
+        if not db:
+            print(
+                "Generating .env Without Redis URI and Password. Now You Have To Add it Manually!"
+            )
+        generate_env()
 
-# Run the auto_maker function
+
 asyncio.run(auto_maker())
